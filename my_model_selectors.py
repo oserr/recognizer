@@ -102,7 +102,51 @@ class SelectorCV(ModelSelector):
     '''
 
     def select(self):
-        warnings.filterwarnings("ignore", category=DeprecationWarning)
-
         # TODO implement model selection using CV
-        raise NotImplementedError
+
+    def compute_for_all_n(self):
+        """Computes the model and log likelihood for all combinations of
+        components.
+
+        :return
+            A list of tuples of the form (n, logL, model), where n is the number
+            of components used to train the model, logL is the log likelihood
+            for the given model, and model is the HMM model.
+        """
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
+        cross_n_results = []
+        for n in range(self.min_n_components, self.max_n_components+1):
+            split_method = KFold()
+            list_logl = []  # list of cross validation scores obtained
+            best_logl = float('-inf')
+            best_model = None
+
+            # get the model for the combined cross-validation training sequences and score with their combined
+            #  validation sequences filling the list 'logL'
+
+            for train_idx, test_idx in split_method.split(self.sequences):
+
+                train_X = self.X[train_idx]
+                train_lengths = self.lengths[train_idx]
+
+                model = GaussianHMM(
+                    n_components=n,
+                    covariance_type="diag",
+                    n_iter=1000,
+                    random_state=self.random_state,
+                    verbose=False
+                ).fit(train_X, train_lenghts)
+
+                test_X = self.X[test_idx]
+                test_lengths = self.lengths[test_idx]
+                logl = model.score(test_X, test_lengths)
+
+                list_logl.append(logl)
+
+                if  logl > best_logl:
+                    best_logl = logl
+                    best_model = model
+
+            avg_logl = np.mean(list_logl)
+            cross_n_results.append((n, avg_logl, best_model)
+        return cross_n_results
