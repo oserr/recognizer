@@ -119,7 +119,8 @@ class SelectorCV(ModelSelector):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
         cross_n_results = []
         for n in range(self.min_n_components, self.max_n_components+1):
-            split_method = KFold()
+            len_sequence = len(self.sequences)
+            split_method = KFold(len_sequence if len_sequence<3  else 3)
             list_logl = []  # list of cross validation scores obtained
             best_logl = float('-inf')
             best_model = None
@@ -138,7 +139,7 @@ class SelectorCV(ModelSelector):
                     n_iter=1000,
                     random_state=self.random_state,
                     verbose=False
-                ).fit(train_X, train_lenghts)
+                ).fit(train_X, train_lengths)
 
                 test_X = self.X[test_idx]
                 test_lengths = self.lengths[test_idx]
