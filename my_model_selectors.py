@@ -151,5 +151,5 @@ class SelectorCV(ModelSelector):
                     best_model = model
 
             avg_logl = np.mean(list_logl)
-            cross_n_results.append((n, avg_logl, best_model)
+            cross_n_results.append((n, avg_logl, best_model))
         return cross_n_results
