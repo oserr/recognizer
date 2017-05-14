@@ -103,6 +103,9 @@ class SelectorCV(ModelSelector):
 
     def select(self):
         # TODO implement model selection using CV
+        results = self.compute_for_all_n()
+        _, _, model = max(results, key=lambda x: x[1])
+        return model
 
     def compute_for_all_n(self):
         """Computes the model and log likelihood for all combinations of
