@@ -104,17 +104,23 @@ class SelectorCV(ModelSelector):
     def select(self):
         # TODO implement model selection using CV
         results = self.compute_for_all_n()
-        _, _, model = max(results, key=lambda x: x[1])
-        return model
+        n, _ = max(results, key=lambda x: x[1])
+        return GaussianHMM(
+            n_components=n,
+            covariance_type="diag",
+            n_iter=1000,
+            random_state=self.random_state,
+            verbose=False
+        ).fit(self.X, self.lengths)
 
     def compute_for_all_n(self):
         """Computes the model and log likelihood for all combinations of
         components.
 
         :return
-            A list of tuples of the form (n, logL, model), where n is the number
-            of components used to train the model, logL is the log likelihood
-            for the given model, and model is the HMM model.
+            A list of tuples of the form (n, logL), where n is the number
+            of components used to train the model, and logL is the log
+            likelihood for the given model.
         """
         warnings.filterwarnings("ignore", category=DeprecationWarning)
         cross_n_results = []
@@ -122,35 +128,27 @@ class SelectorCV(ModelSelector):
             len_sequence = len(self.sequences)
             split_method = KFold(len_sequence if len_sequence<3  else 3)
             list_logl = []  # list of cross validation scores obtained
-            best_logl = float('-inf')
-            best_model = None
-
-            # get the model for the combined cross-validation training sequences and score with their combined
-            #  validation sequences filling the list 'logL'
 
             for train_idx, test_idx in split_method.split(self.sequences):
-
-                train_X = self.X[train_idx]
-                train_lengths = self.lengths[train_idx]
-
-                model = GaussianHMM(
-                    n_components=n,
-                    covariance_type="diag",
-                    n_iter=1000,
-                    random_state=self.random_state,
-                    verbose=False
-                ).fit(train_X, train_lengths)
-
-                test_X = self.X[test_idx]
-                test_lengths = self.lengths[test_idx]
-                logl = model.score(test_X, test_lengths)
-
+                x, lens = combine_sequences(train_idx, self.sequences)
+                try:
+                    model = GaussianHMM(
+                        n_components=n,
+                        covariance_type="diag",
+                        n_iter=1000,
+                        random_state=self.random_state,
+                        verbose=False
+                    ).fit(x, lens)
+                except:
+                    continue
+                x, lens = combine_sequences(test_idx, self.sequences)
+                try:
+                    logl = model.score(x, lens)
+                except:
+                    continue
                 list_logl.append(logl)
 
-                if  logl > best_logl:
-                    best_logl = logl
-                    best_model = model
-
-            avg_logl = np.mean(list_logl)
-            cross_n_results.append((n, avg_logl, best_model))
+            if list_logl:
+                avg_logl = np.mean(list_logl)
+                cross_n_results.append((n, avg_logl))
         return cross_n_results
