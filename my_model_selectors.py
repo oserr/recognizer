@@ -47,14 +47,14 @@ class ModelSelector(object):
             return None
 
     def compute_for_all_n(self):
-        """Computes the model and log likelihood for all combinations of
+        '''Computes the model and log likelihood for all combinations of
         components.
 
         :return
             A list of tuples of the form (n, logL), where n is the number
             of components used to train the model, and logL is the log
             likelihood for the given model.
-        """
+        '''
         warnings.filterwarnings("ignore", category=DeprecationWarning)
         cross_n_results = []
         for n in range(self.min_n_components, self.max_n_components+1):
@@ -81,7 +81,7 @@ class ModelSelector(object):
         return cross_n_results
 
     def compute_model(self, n, x, lens):
-        """Computes a GaussianHMM model.
+        '''Computes a GaussianHMM model.
 
         :param n
             The number of components.
@@ -89,7 +89,7 @@ class ModelSelector(object):
             The observations.
         :param lens
             The lengths of each sequence of observations.
-        """
+        '''
         return GaussianHMM(
             n_components=n,
             covariance_type="diag",
