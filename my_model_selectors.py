@@ -46,6 +46,58 @@ class ModelSelector(object):
                 print("failure on {} with {} states".format(self.this_word, num_states))
             return None
 
+    def compute_for_all_n(self):
+        """Computes the model and log likelihood for all combinations of
+        components.
+
+        :return
+            A list of tuples of the form (n, logL), where n is the number
+            of components used to train the model, and logL is the log
+            likelihood for the given model.
+        """
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
+        cross_n_results = []
+        for n in range(self.min_n_components, self.max_n_components+1):
+            len_sequence = len(self.sequences)
+            split_method = KFold(len_sequence if len_sequence<3  else 3)
+            list_logl = []  # list of cross validation scores obtained
+
+            for train_idx, test_idx in split_method.split(self.sequences):
+                x, lens = combine_sequences(train_idx, self.sequences)
+                try:
+                    model = self.compute_model(n, x, lens)
+                except:
+                    continue
+                x, lens = combine_sequences(test_idx, self.sequences)
+                try:
+                    logl = model.score(x, lens)
+                except:
+                    continue
+                list_logl.append(logl)
+
+            if list_logl:
+                avg_logl = np.mean(list_logl)
+                cross_n_results.append((n, avg_logl))
+        return cross_n_results
+
+    def compute_model(self, n, x, lens):
+        """Computes a GaussianHMM model.
+
+        :param n
+            The number of components.
+        :param x
+            The observations.
+        :param lens
+            The lengths of each sequence of observations.
+        """
+        return GaussianHMM(
+            n_components=n,
+            covariance_type="diag",
+            n_iter=1000,
+            random_state=self.random_state,
+            verbose=False
+        ).fit(x, lens)
+
 
 class SelectorConstant(ModelSelector):
     """ select the model with value self.n_constant
