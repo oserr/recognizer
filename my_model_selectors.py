@@ -135,10 +135,16 @@ class SelectorBIC(ModelSelector):
 
         :return: GaussianHMM object
         """
-        warnings.filterwarnings("ignore", category=DeprecationWarning)
+        results = self.compute_for_all_n()
+        mapper = map(lambda n, logl: (n, self.compute_bic(n, logl)), results)
+        n, _ = min(results, key=lambda x: x[1])
+        return self.compute_model(n, self.X, self.lengths)
 
-        # TODO implement model selection based on BIC scores
-        raise NotImplementedError
+    def compute_bic(n, logl):
+        '''Computes the Bayesian Information Criterion (BIC) score given n and
+        the log likelihood.
+        '''
+        return (-2*logl) + (self.compute_free_param(n)*np.log2(n))
 
 
 class SelectorDIC(ModelSelector):
