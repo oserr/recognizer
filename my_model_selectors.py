@@ -149,58 +149,12 @@ class SelectorDIC(ModelSelector):
 
 
 class SelectorCV(ModelSelector):
-    ''' select best model based on average log Likelihood of cross-validation folds
-
+    '''Select best model based on average log Likelihood of cross-validation
+    folds.
     '''
 
     def select(self):
         # TODO implement model selection using CV
         results = self.compute_for_all_n()
         n, _ = max(results, key=lambda x: x[1])
-        return GaussianHMM(
-            n_components=n,
-            covariance_type="diag",
-            n_iter=1000,
-            random_state=self.random_state,
-            verbose=False
-        ).fit(self.X, self.lengths)
-
-    def compute_for_all_n(self):
-        """Computes the model and log likelihood for all combinations of
-        components.
-
-        :return
-            A list of tuples of the form (n, logL), where n is the number
-            of components used to train the model, and logL is the log
-            likelihood for the given model.
-        """
-        warnings.filterwarnings("ignore", category=DeprecationWarning)
-        cross_n_results = []
-        for n in range(self.min_n_components, self.max_n_components+1):
-            len_sequence = len(self.sequences)
-            split_method = KFold(len_sequence if len_sequence<3  else 3)
-            list_logl = []  # list of cross validation scores obtained
-
-            for train_idx, test_idx in split_method.split(self.sequences):
-                x, lens = combine_sequences(train_idx, self.sequences)
-                try:
-                    model = GaussianHMM(
-                        n_components=n,
-                        covariance_type="diag",
-                        n_iter=1000,
-                        random_state=self.random_state,
-                        verbose=False
-                    ).fit(x, lens)
-                except:
-                    continue
-                x, lens = combine_sequences(test_idx, self.sequences)
-                try:
-                    logl = model.score(x, lens)
-                except:
-                    continue
-                list_logl.append(logl)
-
-            if list_logl:
-                avg_logl = np.mean(list_logl)
-                cross_n_results.append((n, avg_logl))
-        return cross_n_results
+        return self.compute_model(n, self.X, self.lengths)
