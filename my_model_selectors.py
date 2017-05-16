@@ -154,7 +154,7 @@ class SelectorCV(ModelSelector):
     '''
 
     def select(self):
-        # TODO implement model selection using CV
+        '''Selects cross-validated model with best log likelihood result.'''
         results = self.compute_for_all_n()
         n, _ = max(results, key=lambda x: x[1])
         return self.compute_model(n, self.X, self.lengths)
