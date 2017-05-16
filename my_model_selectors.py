@@ -97,6 +97,16 @@ class ModelSelector(object):
             verbose=False
         ).fit(x, lens)
 
+    def compute_free_param(self, n):
+        '''Computes the number of free paramters for a model of n components.
+
+        :param n
+            The number of components.
+        :return
+            The total number of free parameters.
+        '''
+        return n**2 + 2*len(self.X[0])*n - 1
+
 
 class SelectorConstant(ModelSelector):
     """ select the model with value self.n_constant
