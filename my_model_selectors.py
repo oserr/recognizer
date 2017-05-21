@@ -90,6 +90,8 @@ class SelectorBIC(ModelSelector):
         :return: GaussianHMM object
         """
         results = self.compute_for_all_n()
+        if not results:
+            return None
         results = [(self.compute_bic(n,l), m) for n, l, m in results]
         _, model = min(results, key=lambda x: x[0])
         return model
