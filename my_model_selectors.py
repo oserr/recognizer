@@ -197,6 +197,8 @@ class SelectorCV(ModelSelector):
     def select(self):
         '''Selects cross-validated model with best log likelihood result.'''
         results = self.compute_for_all_n()
+        if not results:
+            return None
         n, _ = max(results, key=lambda x: x[1])
         return self.base_model(n)
 
@@ -211,10 +213,27 @@ class SelectorCV(ModelSelector):
         '''
         warnings.filterwarnings("ignore", category=DeprecationWarning)
         # Save values to restore before returning
-        save_x, save_lens = self.X, self.lengths
         cross_n_results = []
+        len_sequence = len(self.sequences)
+        if len_sequence <= 1:
+            for n in range(self.min_n_components, self.max_n_components+1):
+                list_logl = []  # list of cross validation scores obtained
+                model = self.base_model(n)
+                if not model:
+                    continue
+                try:
+                    logl = model.score(self.X, self.lengths)
+                except:
+                    continue
+                list_logl.append(logl)
+
+                if list_logl:
+                    avg_logl = np.mean(list_logl)
+                    cross_n_results.append((n, avg_logl))
+            return cross_n_results
+
+        save_x, save_lens = self.X, self.lengths
         for n in range(self.min_n_components, self.max_n_components+1):
-            len_sequence = len(self.sequences)
             split_method = KFold(len_sequence if len_sequence<3  else 3)
             list_logl = []  # list of cross validation scores obtained
 
