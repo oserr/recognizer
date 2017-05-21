@@ -146,6 +146,8 @@ class SelectorDIC(ModelSelector):
 
     def select(self):
         results = self.compute_for_all_n()
+        if not results:
+            return None
         _, model = max(results, key=lambda x: x[0])
         return model
 
