@@ -29,8 +29,7 @@ def recognize(models: dict, test_set: SinglesData):
                 logl = model.score(x, lens)
                 probs[word] = logl
             except:
-                continue
-        if not probs: continue
+                probs[word] = float('-inf')
         probabilities.append(probs)
         w, _ = max(probs.items(), key=lambda x: x[1])
         guesses.append(w)
